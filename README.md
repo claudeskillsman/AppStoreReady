@@ -28,7 +28,7 @@ FAIL    Background task identifier not permitted  [MyApp]
         Fix: Add each identifier to BGTaskSchedulerPermittedIdentifiers in Info.plist.
         Rule ASR019 · Verified configuration issue · confidence high · https://developer.apple.com/documentation/bundleresources/information-property-list/bgtaskschedulerpermittedidentifiers
 REVIEW  In-app purchase rules apply (Guideline 3.1.1)
-        The code uses StoreKit or an in-app purchase SDK. Guideline 3.1.1 says that unlocking features or functionality within the app must use in-app purchase, ...
+        The code uses StoreKit purchase APIs or an in-app purchase SDK. Guideline 3.1.1 says that unlocking features or functionality within the app must use in-app purchase, ...
         File: MyApp/Store.swift:1
         Fix: Review Guideline 3.1.1 and confirm the app follows it before submitting.
         Rule ASR025 · Requires manual review · confidence medium · https://developer.apple.com/app-store/review/guidelines/#in-app-purchase
