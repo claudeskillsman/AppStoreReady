@@ -45,7 +45,7 @@ AppStoreReady is a static analyser. It points out things that are likely to brea
 AppStoreReady is a Swift package. It needs Swift 5.9 or later (Xcode 15+ on macOS, or a Swift toolchain on Linux).
 
 ```sh
-git clone https://github.com/charliegkoch-design/AppStoreReady.git
+git clone https://github.com/claudeskillsman/AppStoreReady.git
 cd AppStoreReady
 swift build -c release
 cp .build/release/appstoreready /usr/local/bin/

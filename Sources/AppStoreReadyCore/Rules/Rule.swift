@@ -59,7 +59,7 @@ public enum RuleRegistry {
         rationale: "Suppressions hide findings from the report and the exit code. Expired or stale entries, and hidden security problems, need to stay visible so they are revisited.",
         category: .manualReview,
         references: [
-            Reference("AppStoreReady suppressions", "https://github.com/charliegkoch-design/AppStoreReady#suppressing-findings"),
+            Reference("AppStoreReady suppressions", "https://github.com/claudeskillsman/AppStoreReady#suppressing-findings"),
         ]
     )
 

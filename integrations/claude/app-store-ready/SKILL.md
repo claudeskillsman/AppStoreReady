@@ -23,7 +23,7 @@ Try these in order and use the first that works:
 2. An existing checkout at `~/.appstoreready/AppStoreReady`. Run `swift build -c release` there if `.build/release/appstoreready` is missing.
 3. Clone and build it:
    ```sh
-   git clone https://github.com/charliegkoch-design/AppStoreReady.git ~/.appstoreready/AppStoreReady
+   git clone https://github.com/claudeskillsman/AppStoreReady.git ~/.appstoreready/AppStoreReady
    cd ~/.appstoreready/AppStoreReady && swift build -c release
    ```
 4. If the clone fails, ask the user for the folder where they unzipped AppStoreReady, and build it there.

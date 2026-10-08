@@ -33,7 +33,7 @@ final class RuleRegistryTests: XCTestCase {
     }
 
     func testSuppressionNoticesLinkToTheReadme() {
-        XCTAssertEqual(RuleRegistry.suppressionsMetadata.documentationURL?.absoluteString, "https://github.com/charliegkoch-design/AppStoreReady#suppressing-findings")
+        XCTAssertEqual(RuleRegistry.suppressionsMetadata.documentationURL?.absoluteString, "https://github.com/claudeskillsman/AppStoreReady#suppressing-findings")
         XCTAssertEqual(RuleRegistry.suppressionsMetadata.category, .manualReview)
     }
 
