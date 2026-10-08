@@ -284,6 +284,10 @@ Run `appstoreready rules` for the same list, with each rule's rationale and sour
 | ASR025 | App Review Guideline topics | `MANUAL_REVIEW` when the code shows that a guideline applies: StoreKit or a purchases SDK (3.1.1 In-App Purchase), a third-party sign-in SDK (4.8 Login Services), account sign-up code (5.1.1(v) account deletion). Also lists Run Script build phases, which AppStoreReady never runs or analyzes. | [App Review Guidelines](https://developer.apple.com/app-store/review/guidelines/) |
 | ASR000 | Suppressions | Notices about `.appstoreready.yml`; see [Suppressing findings](#suppressing-findings). | This README |
 
+## Using with Claude (optional)
+
+The [`integrations/claude`](integrations/claude) folder has an optional skill for Claude Code that runs the audit, checks each finding against your code, and turns the report into a prioritized list of fixes. AppStoreReady itself doesn't depend on it.
+
 ## Architecture
 
 ```
@@ -311,7 +315,7 @@ A scan runs in three steps:
 
 ## Contributing
 
-Contributions are welcome, especially new rules backed by Apple documentation, fixtures that reproduce real-world project layouts, and fixes for false positives.
+Contributions are welcome, especially new rules backed by Apple documentation, fixtures that reproduce real-world project layouts, and fixes for false positives. See [CONTRIBUTING.md](CONTRIBUTING.md) for the full guide, and use the issue templates to report wrong findings or suggest rules.
 
 ```sh
 swift build
@@ -352,7 +356,7 @@ AppStoreReady is designed to be safe to run on code you do not fully trust.
 - **Secrets are never printed.** Findings for suspected credentials contain the file, line, credential type, and length only, in both text and JSON output.
 - **Bounded file access.** Symbolic links are not followed, binary files are skipped, and file size (2 MB) and file count (50,000) are capped.
 
-If you find a way to make AppStoreReady execute code, reach the network, or leak a secret value, please report it privately to the maintainers rather than in a public issue.
+If you find a way to make AppStoreReady execute code, reach the network, or leak a secret value, please report it privately as described in [SECURITY.md](SECURITY.md) rather than in a public issue.
 
 ## License
 

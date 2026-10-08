@@ -1,0 +1,25 @@
+name: Bug report
+description: AppStoreReady crashed, failed to scan, or behaved unexpectedly.
+labels: [bug]
+body:
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: Include the command you ran and the output. Remove any secrets or private paths first.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect?
+  - type: input
+    id: version
+    attributes:
+      label: AppStoreReady version
+      placeholder: "0.2.0"
+  - type: input
+    id: environment
+    attributes:
+      label: macOS, Xcode, and Swift versions
+      placeholder: "macOS 26.1, Xcode 26.1, Swift 6.2"
