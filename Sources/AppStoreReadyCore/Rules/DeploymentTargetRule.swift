@@ -57,49 +57,63 @@ public struct DeploymentTargetRule: Rule {
 
     public init() {}
 
+    /// The platforms a target builds for. Multiplatform targets use
+    /// `SDKROOT = auto` and list their platforms in SUPPORTED_PLATFORMS.
+    static func platforms(for target: ResolvedTarget) -> [Platform] {
+        if target.sdk == "auto" {
+            let supported = (target.buildSettings.value("SUPPORTED_PLATFORMS") ?? "").split(separator: " ").map(String.init)
+            var seen = Set<String>()
+            return supported.compactMap(platform(for:)).filter { seen.insert($0.name).inserted }
+        }
+        return platform(for: target.sdk).map { [$0] } ?? []
+    }
+
     public func evaluate(_ context: ScanContext) -> [Finding] {
-        context.targets.compactMap { target in
-            guard let platform = Self.platform(for: target.sdk),
-                  let raw = target.buildSettings.value(platform.setting),
-                  let version = Self.parse(raw) else { return nil }
-            let file = context.projectFile(for: target)
-            let evidence = ["\(platform.setting) = \(raw) (\(target.configurationName))"]
-            if let minimum = platform.uploadMinimum, Self.isLower(version, than: minimum) {
-                return finding(
-                    "Deployment target below App Store minimum",
-                    message: "'\(target.name)' targets \(platform.name) \(raw). Apple requires iOS and iPadOS apps uploaded to App Store Connect since September 9, 2026 to target iOS 13 or later.",
-                    severity: .error,
-                    confidence: .high,
-                    classification: .verifiedIssue,
-                    file: file,
-                    target: target,
-                    evidence: evidence,
-                    fix: "Raise \(platform.setting) to at least \(platform.xcodeMinimum.map(String.init).joined(separator: ".")).0, the lowest target current Xcode versions support for App Store upload."
-                )
-            }
-            if Self.isLower(version, than: platform.xcodeMinimum) {
-                let minimum = platform.xcodeMinimum.map(String.init).joined(separator: ".")
-                return finding(
-                    "Deployment target below Xcode's supported range",
-                    message: "'\(target.name)' targets \(platform.name) \(raw). Apple's Xcode support page lists \(platform.name) \(minimum) as the lowest deployment target Xcode 26 and later support for uploading to App Store Connect, and uploads must be built with Xcode 26 or later.",
-                    severity: .warning,
-                    confidence: .medium,
-                    classification: .potentialIssue,
-                    file: file,
-                    target: target,
-                    evidence: evidence,
-                    fix: "Raise \(platform.setting) to \(minimum) or later."
-                )
-            }
+        context.targets.flatMap { target in
+            Self.platforms(for: target).compactMap { evaluate(target, platform: $0, context: context) }
+        }
+    }
+
+    private func evaluate(_ target: ResolvedTarget, platform: Platform, context: ScanContext) -> Finding? {
+        guard let raw = target.buildSettings.value(platform.setting),
+              let version = Self.parse(raw) else { return nil }
+        let file = context.projectFile(for: target)
+        let evidence = ["\(platform.setting) = \(raw) (\(target.configurationName))"]
+        if let minimum = platform.uploadMinimum, Self.isLower(version, than: minimum) {
             return finding(
-                "Deployment target is supported",
-                message: "'\(target.name)' targets \(platform.name) \(raw), which current Xcode versions support for App Store upload.",
-                severity: .pass,
+                "Deployment target below App Store minimum",
+                message: "'\(target.name)' targets \(platform.name) \(raw). Apple requires iOS and iPadOS apps uploaded to App Store Connect since September 9, 2026 to target iOS 13 or later.",
+                severity: .error,
                 confidence: .high,
+                classification: .verifiedIssue,
                 file: file,
                 target: target,
-                evidence: evidence
+                evidence: evidence,
+                fix: "Raise \(platform.setting) to at least \(platform.xcodeMinimum.map(String.init).joined(separator: ".")).0, the lowest target current Xcode versions support for App Store upload."
             )
         }
+        if Self.isLower(version, than: platform.xcodeMinimum) {
+            let minimum = platform.xcodeMinimum.map(String.init).joined(separator: ".")
+            return finding(
+                "Deployment target below Xcode's supported range",
+                message: "'\(target.name)' targets \(platform.name) \(raw). Apple's Xcode support page lists \(platform.name) \(minimum) as the lowest deployment target Xcode 26 and later support for uploading to App Store Connect, and uploads must be built with Xcode 26 or later.",
+                severity: .warning,
+                confidence: .medium,
+                classification: .potentialIssue,
+                file: file,
+                target: target,
+                evidence: evidence,
+                fix: "Raise \(platform.setting) to \(minimum) or later."
+            )
+        }
+        return finding(
+            "Deployment target is supported",
+            message: "'\(target.name)' targets \(platform.name) \(raw), which current Xcode versions support for App Store upload.",
+            severity: .pass,
+            confidence: .high,
+            file: file,
+            target: target,
+            evidence: evidence
+        )
     }
 }

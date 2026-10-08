@@ -260,7 +260,7 @@ Run `appstoreready rules` for the same list, with each rule's rationale and sour
 | ID | Check | Reports | Source |
 | --- | --- | --- | --- |
 | ASR009 | Debug configuration | `WARNING` when a scheme's Archive action uses a configuration named Debug, or the archive configuration has `SWIFT_OPTIMIZATION_LEVEL = -Onone`, `GCC_OPTIMIZATION_LEVEL = 0`, or a `DEBUG` compilation condition. `INFO` when no scheme archives the target, so Release was assumed. | [Customizing the build schemes](https://developer.apple.com/documentation/xcode/customizing-the-build-schemes-for-a-project) |
-| ASR012 | Deployment target | `ERROR` (verified) for an iOS deployment target below 13, which App Store Connect has refused since September 9, 2026. `WARNING` below the lowest target Xcode 26 supports for upload (iOS/iPadOS/tvOS 15, watchOS 8, macOS 11, visionOS 1); Xcode 26 has been required for uploads since April 28, 2026. The SDK used to build is not visible to a static scan. | [Upcoming requirements](https://developer.apple.com/news/upcoming-requirements/), [Xcode support](https://developer.apple.com/support/xcode/) |
+| ASR012 | Deployment target | `ERROR` (verified) for an iOS deployment target below 13, which App Store Connect has refused since September 9, 2026. `WARNING` below the lowest target Xcode 26 supports for upload (iOS/iPadOS/tvOS 15, watchOS 8, macOS 11, visionOS 1); Xcode 26 has been required for uploads since April 28, 2026. Multiplatform targets (`SDKROOT = auto`) are checked for each platform in `SUPPORTED_PLATFORMS`. The SDK used to build is not visible to a static scan. | [Upcoming requirements](https://developer.apple.com/news/upcoming-requirements/), [Xcode support](https://developer.apple.com/support/xcode/) |
 | ASR022 | Release build settings | `INFO` when the archive configuration does not produce dSYMs (`DEBUG_INFORMATION_FORMAT`) or has `ENABLE_TESTABILITY = YES`. | [Build settings reference](https://developer.apple.com/documentation/xcode/build-settings-reference) |
 
 ### Accessibility
@@ -281,7 +281,7 @@ Run `appstoreready rules` for the same list, with each rule's rationale and sour
 
 | ID | Check | Reports | Source |
 | --- | --- | --- | --- |
-| ASR025 | App Review Guideline topics | `MANUAL_REVIEW` when the code shows that a guideline applies: StoreKit or a purchases SDK (3.1.1 In-App Purchase), a third-party sign-in SDK (4.8 Login Services), account sign-up code (5.1.1(v) account deletion). Also lists Run Script build phases, which AppStoreReady never runs or analyzes. | [App Review Guidelines](https://developer.apple.com/app-store/review/guidelines/) |
+| ASR025 | App Review Guideline topics | `MANUAL_REVIEW` when the code shows that a guideline applies: StoreKit purchase APIs or a purchases SDK (3.1.1 In-App Purchase; review prompts don't count), a third-party sign-in SDK (4.8 Login Services), account sign-up code (5.1.1(v) account deletion). Also lists Run Script build phases, which AppStoreReady never runs or analyzes. | [App Review Guidelines](https://developer.apple.com/app-store/review/guidelines/) |
 | ASR000 | Suppressions | Notices about `.appstoreready.yml`; see [Suppressing findings](#suppressing-findings). | This README |
 
 ## Using with Claude (optional)

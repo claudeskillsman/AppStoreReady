@@ -2,7 +2,7 @@ import XCTest
 @testable import AppStoreReadyCore
 
 final class RuleRegistryTests: XCTestCase {
-    static let allFixtures = ["ValidApp", "MissingConfig", "Malformed", "MultiTarget", "MultiConfig", "WorkspaceApp", "Hardening", "PrivacyIssues", "MacApp", "Suppressed"]
+    static let allFixtures = ["ValidApp", "MissingConfig", "Malformed", "MultiTarget", "MultiConfig", "WorkspaceApp", "Hardening", "PrivacyIssues", "MacApp", "Multiplatform", "Suppressed"]
 
     func testRuleIdentifiersAreUniqueAndWellFormed() {
         let ids = RuleRegistry.allMetadata.map(\.id)

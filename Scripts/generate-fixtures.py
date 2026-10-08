@@ -672,6 +672,27 @@ struct MacApp: App {
 app_icon(f"{B}/MacApp/Assets.xcassets", idiom="mac", size="512x512", scale="2x")
 scheme(f"{B}/MacApp.xcodeproj/xcshareddata/xcschemes/MacApp.xcscheme", "MacApp", ids["MacApp"], "MacApp", "MacApp.xcodeproj")
 
+# ---------------------------------------------------------------- Multiplatform
+# One target for iOS and macOS (SDKROOT = auto); a store-review prompt that is not a purchase.
+B = "Multiplatform"
+mp_project = {c: dict(base, SDKROOT="auto", SUPPORTED_PLATFORMS="iphoneos iphonesimulator macosx", MACOSX_DEPLOYMENT_TARGET="10.14")
+              for c, base in (("Debug", PROJECT_DEBUG), ("Release", PROJECT_RELEASE))}
+mp = app_settings(GENERATE_INFOPLIST_FILE="YES", PRODUCT_BUNDLE_IDENTIFIER="com.acme.multiplatform", DEVELOPMENT_TEAM="ABCDE12345",
+                  MARKETING_VERSION="1.0.0", CURRENT_PROJECT_VERSION="1")
+ids = project("Multiplatform", B, ["Debug", "Release"], mp_project, [
+    {"name": "Multiplatform", "type": "com.apple.product-type.application",
+     "sources": ["Multiplatform/MultiplatformApp.swift"], "settings": {"Debug": mp, "Release": mp}},
+])
+write(f"{B}/Multiplatform/MultiplatformApp.swift", '''import StoreKit
+import SwiftUI
+
+@main
+struct MultiplatformApp: App {
+    @Environment(\\.requestReview) private var requestReview
+    var body: some Scene { WindowGroup { Button("Rate") { requestReview() }.accessibilityLabel("Rate the app") } }
+}
+''')
+
 # ---------------------------------------------------------------- Suppressed
 B = "Suppressed"
 sup = app_settings(GENERATE_INFOPLIST_FILE="YES", PRODUCT_BUNDLE_IDENTIFIER="com.acme.suppressed",

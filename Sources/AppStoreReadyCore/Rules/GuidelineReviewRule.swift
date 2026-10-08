@@ -32,8 +32,9 @@ public struct GuidelineReviewRule: Rule {
         Topic(
             title: "In-app purchase rules apply",
             guideline: "3.1.1",
-            message: "The code uses StoreKit or an in-app purchase SDK. Guideline 3.1.1 says that unlocking features or functionality within the app must use in-app purchase, and that apps may not use their own unlock mechanisms such as license keys or QR codes.",
-            patterns: [TextPattern(#"\bimport\s+StoreKit\b|\bSKPaymentQueue\b|\bProduct\.products\(|\bTransaction\.updates\b"#)],
+            message: "The code uses StoreKit purchase APIs or an in-app purchase SDK. Guideline 3.1.1 says that unlocking features or functionality within the app must use in-app purchase, and that apps may not use their own unlock mechanisms such as license keys or QR codes.",
+            // Purchase APIs only: `import StoreKit` alone is also used for review prompts.
+            patterns: [TextPattern(#"\bSKPaymentQueue\b|\bSKProductsRequest\b|\bProduct\.products\s*\(|\bTransaction\.(updates|currentEntitlements)\b|\b(SubscriptionStoreView|ProductView|StoreView)\s*\("#)],
             dependencies: ["purchases-ios", "RevenueCat", "SwiftyStoreKit", "Qonversion", "adapty"],
             anchor: "in-app-purchase"
         ),
@@ -41,7 +42,7 @@ public struct GuidelineReviewRule: Rule {
             title: "Third-party sign-in requires an equivalent option",
             guideline: "4.8",
             message: "The code uses a third-party sign-in SDK. Guideline 4.8 says apps that use a third-party or social login service for the user's primary account must also offer an equivalent login option that limits data collection to name and email, lets people keep their email private, and does not track without consent. The guideline lists exemptions.",
-            patterns: [TextPattern(#"\bGIDSignIn\b|\bLoginManager\(\)|\bFBSDKLoginKit\b|\bimport\s+FacebookLogin\b|\bimport\s+GoogleSignIn\b"#)],
+            patterns: [TextPattern(#"\bGIDSignIn\b|\bFBSDKLoginManager\b|\bLoginManager\s*\(\s*\)\s*\.\s*logIn\b|\bFBLoginButton\b|\bimport\s+(FacebookLogin|FBSDKLoginKit|GoogleSignIn)\b"#)],
             dependencies: ["GoogleSignIn", "GoogleSignIn-iOS", "FBSDKLoginKit", "facebook-ios-sdk", "FacebookLogin", "LineSDK", "TwitterKit"],
             anchor: "login-services"
         ),
@@ -54,6 +55,8 @@ public struct GuidelineReviewRule: Rule {
             anchor: "data-collection-and-storage"
         ),
     ]
+
+    static let signInWithApple = [TextPattern(#"\bASAuthorizationAppleIDProvider\b|\bSignInWithAppleButton\b"#)]
 
     public init() {}
 
@@ -75,6 +78,9 @@ public struct GuidelineReviewRule: Rule {
                 evidence.append("Dependency: \(dependency)")
             }
             guard !evidence.isEmpty else { continue }
+            if topic.guideline == "4.8", let apple = context.firstMatch(of: Self.signInWithApple, in: codeFiles) {
+                evidence.append("Sign in with Apple found at \(apple.file.relativePath):\(apple.line); check that it is offered as an equivalent option")
+            }
             findings.append(finding(
                 "\(topic.title) (Guideline \(topic.guideline))",
                 message: topic.message,

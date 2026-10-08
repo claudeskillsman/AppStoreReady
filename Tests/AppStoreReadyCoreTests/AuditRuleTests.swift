@@ -262,6 +262,34 @@ final class AuditRuleTests: XCTestCase {
         XCTAssertEqual(login.documentationURL?.fragment, "login-services")
     }
 
+    func testStoreReviewPromptIsNotAnInAppPurchase() throws {
+        XCTAssertEqual(try Fixtures.report("Multiplatform").findings(rule: "ASR025"), [])
+        let purchase = GuidelineReviewRule.topics[0].patterns
+        XCTAssertFalse(purchase.contains { $0.matches("import StoreKit") })
+        XCTAssertFalse(purchase.contains { $0.matches("SKStoreReviewController.requestReview(in: scene)") })
+        XCTAssertTrue(purchase.contains { $0.matches("let products = try await Product.products(for: ids)") })
+        XCTAssertTrue(purchase.contains { $0.matches("SKPaymentQueue.default().add(payment)") })
+    }
+
+    func testCustomLoginManagerIsNotThirdPartySignIn() {
+        let login = GuidelineReviewRule.topics[1].patterns
+        XCTAssertFalse(login.contains { $0.matches("let manager = LoginManager()") })
+        XCTAssertTrue(login.contains { $0.matches("LoginManager().logIn(permissions: [], from: self)") })
+        XCTAssertTrue(login.contains { $0.matches("import GoogleSignIn") })
+    }
+
+    // MARK: Multiplatform targets
+
+    func testMultiplatformTargetChecksEachPlatform() throws {
+        let report = try Fixtures.report("Multiplatform")
+        let findings = report.findings(rule: "ASR012")
+        XCTAssertEqual(findings.map(\.severity), [.pass, .warning])
+        XCTAssertEqual(findings.map { $0.evidence.first ?? "" }, [
+            "IPHONEOS_DEPLOYMENT_TARGET = 17.0 (Release)",
+            "MACOSX_DEPLOYMENT_TARGET = 10.14 (Release)",
+        ])
+    }
+
     // MARK: ASR006 / ASR007 extensions
 
     func testAlwaysLocationNeedsWhenInUseKey() throws {
