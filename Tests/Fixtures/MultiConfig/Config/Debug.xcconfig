@@ -1,0 +1,2 @@
+#include "Shared.xcconfig"
+CURRENT_PROJECT_VERSION = 100
