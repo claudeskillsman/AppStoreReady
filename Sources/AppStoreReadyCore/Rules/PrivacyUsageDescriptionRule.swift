@@ -6,8 +6,13 @@ public struct PrivacyUsageDescriptionRule: Rule {
         id: "ASR006",
         title: "Privacy usage descriptions",
         description: "Looks for source code that requests access to protected resources (camera, location, photos, contacts, and others) and checks that the matching purpose string (for example NSCameraUsageDescription) is present and not empty.",
-        category: .privacy,
-        documentationURL: URL(string: "https://developer.apple.com/documentation/uikit/requesting-access-to-protected-resources")
+        rationale: "Apple's documentation states that access to a protected resource without a purpose string fails and might crash the app, and that App Review rejects apps containing such code without one.",
+        category: .permissions,
+        references: [
+            Reference("Requesting access to protected resources", "https://developer.apple.com/documentation/uikit/requesting-access-to-protected-resources"),
+            Reference("Requesting authorization to use location services", "https://developer.apple.com/documentation/corelocation/requesting-authorization-to-use-location-services"),
+            Reference("App Review Guideline 5.1.1(ii)", "https://developer.apple.com/app-store/review/guidelines/#data-collection-and-storage"),
+        ]
     )
 
     public init() {}
@@ -81,6 +86,23 @@ public struct PrivacyUsageDescriptionRule: Rule {
                     fix: "Replace it with a sentence that explains why the app needs this access, or remove the key if the app does not use it."
                 ))
             }
+        }
+
+        // Always authorization needs the When In Use string as well.
+        if info.resolved["NSLocationAlwaysAndWhenInUseUsageDescription"] != nil,
+           info.resolved["NSLocationWhenInUseUsageDescription"] == nil,
+           !findings.contains(where: { $0.title == "Missing privacy usage description" && $0.message.contains("NSLocationWhenInUseUsageDescription") }) {
+            findings.append(finding(
+                "Always location access without When In Use description",
+                message: "'\(target.name)' sets NSLocationAlwaysAndWhenInUseUsageDescription but not NSLocationWhenInUseUsageDescription. Apple's documentation says the When In Use string is required for both When In Use and Always authorization, and that requests fail immediately when a required key is missing.",
+                severity: .error,
+                confidence: .high,
+                classification: .verifiedIssue,
+                file: context.infoPlistLocation(for: target, key: "NSLocationAlwaysAndWhenInUseUsageDescription"),
+                target: target,
+                evidence: ["NSLocationAlwaysAndWhenInUseUsageDescription is set", "NSLocationWhenInUseUsageDescription is missing"],
+                fix: "Add NSLocationWhenInUseUsageDescription with a sentence explaining why the app uses location while in use."
+            ))
         }
 
         if findings.isEmpty {

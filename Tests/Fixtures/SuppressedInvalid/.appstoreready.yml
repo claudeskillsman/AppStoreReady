@@ -1,0 +1,4 @@
+version: 1
+suppressions:
+  - rule: ASR999
+    reason: unknown rule

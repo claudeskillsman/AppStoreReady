@@ -6,8 +6,12 @@ public struct AccessibilityReviewRule: Rule {
         id: "ASR010",
         title: "Accessibility",
         description: "Accessibility depends on runtime behavior (VoiceOver labels, Dynamic Type, contrast) that a static scan cannot evaluate. This rule always produces an informational reminder.",
+        rationale: "Accessibility depends on runtime behavior that a static scan cannot observe; it has to be tested on a running app.",
         category: .accessibility,
-        documentationURL: URL(string: "https://developer.apple.com/accessibility/")
+        references: [
+            Reference("Accessibility", "https://developer.apple.com/accessibility/"),
+            Reference("Accessibility Inspector", "https://developer.apple.com/documentation/accessibility/accessibility-inspector"),
+        ]
     )
 
     public init() {}

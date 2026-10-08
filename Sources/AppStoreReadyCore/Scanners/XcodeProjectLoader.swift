@@ -143,6 +143,7 @@ private final class ObjectGraph {
         var files = Set<String>()
         var directories: [String] = []
         var excluded = Set<String>()
+        var scripts: [String] = []
 
         func addMember(_ url: URL) {
             if PathUtilities.isDirectory(url) {
@@ -155,6 +156,10 @@ private final class ObjectGraph {
         for phaseValue in target["buildPhases"]?.arrayValue ?? [] {
             guard let phase = object(phaseValue.stringValue) else { continue }
             let isa = phase["isa"]?.stringValue
+            if isa == "PBXShellScriptBuildPhase" {
+                scripts.append(phase["name"]?.stringValue ?? "Run Script")
+                continue
+            }
             guard isa == "PBXSourcesBuildPhase" || isa == "PBXResourcesBuildPhase" else { continue }
             for buildFileValue in phase["files"]?.arrayValue ?? [] {
                 guard let buildFile = object(buildFileValue.stringValue), let reference = buildFile["fileRef"]?.stringValue else { continue }
@@ -191,7 +196,8 @@ private final class ObjectGraph {
             defaultConfigurationName: defaultName,
             memberFiles: files,
             memberDirectories: directories,
-            excludedFiles: excluded
+            excludedFiles: excluded,
+            scriptPhaseNames: scripts
         )
     }
 }

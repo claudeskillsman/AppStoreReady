@@ -19,8 +19,8 @@ final class ReporterTests: XCTestCase {
         XCTAssertTrue(text.contains("FAIL    Potential hardcoded secret detected"))
         XCTAssertTrue(text.contains("INFO    Accessibility audit requires runtime testing"))
         XCTAssertTrue(text.contains("File: B.swift:9"))
-        XCTAssertTrue(text.contains("Rule ASR008 · confidence high · https://example.com/docs"))
-        XCTAssertTrue(text.contains("Summary: 1 failure, 1 warning, 1 manual review item."))
+        XCTAssertTrue(text.contains("Rule ASR008 · Verified configuration issue · confidence high · https://example.com/docs"))
+        XCTAssertTrue(text.contains("Summary: 1 failure, 1 warning, 1 recommendation, 0 manual review items."))
         XCTAssertTrue(text.contains("1 check passed."))
         XCTAssertFalse(text.contains("\u{1B}["), "no ANSI codes without color")
     }
@@ -38,7 +38,7 @@ final class ReporterTests: XCTestCase {
 
     func testSummaryPluralization() {
         let report = ScanReport(scannedPath: ".", projects: [], targets: [], findings: [])
-        XCTAssertTrue(TextReporter().render(report).contains("Summary: 0 failures, 0 warnings, 0 manual review items."))
+        XCTAssertTrue(TextReporter().render(report).contains("Summary: 0 failures, 0 warnings, 0 recommendations, 0 manual review items."))
     }
 
     func testJSONRoundTrips() throws {

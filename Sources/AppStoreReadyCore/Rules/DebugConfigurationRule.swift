@@ -6,8 +6,11 @@ public struct DebugConfigurationRule: Rule {
         id: "ASR009",
         title: "Debug configuration",
         description: "Checks the configuration used to archive each target: flags schemes whose Archive action uses a Debug configuration, and archive configurations with unoptimized code or DEBUG compilation conditions.",
-        category: .buildSettings,
-        documentationURL: URL(string: "https://developer.apple.com/documentation/xcode/customizing-the-build-schemes-for-a-project")
+        rationale: "Archives built with debug settings are unoptimized and may include debug-only code paths, so the build you submit behaves differently from the build you tested as a release.",
+        category: .buildConfiguration,
+        references: [
+            Reference("Customizing the build schemes for a project", "https://developer.apple.com/documentation/xcode/customizing-the-build-schemes-for-a-project"),
+        ]
     )
 
     public init() {}

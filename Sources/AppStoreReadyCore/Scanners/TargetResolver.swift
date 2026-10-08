@@ -46,7 +46,8 @@ struct TargetResolver {
             configurationSource: source,
             buildSettings: settings,
             allConfigurations: all,
-            infoPlist: infoPlist(settings: settings, project: project, issues: &issues)
+            infoPlist: infoPlist(settings: settings, project: project, issues: &issues),
+            entitlements: entitlements(settings: settings, project: project, issues: &issues)
         )
     }
 
@@ -160,6 +161,24 @@ struct TargetResolver {
             keysFromFile: keysFromFile,
             isUnreadable: unreadable
         )
+    }
+
+    private func entitlements(settings: BuildSettings, project: XcodeProject, issues: inout [ParseIssue]) -> EntitlementsFile? {
+        guard let path = settings.value("CODE_SIGN_ENTITLEMENTS"), !path.isEmpty else { return nil }
+        let url = PathUtilities.resolve(path, relativeTo: project.sourceRoot)
+        let relative = PathUtilities.relativePath(of: url, to: root)
+        guard let data = FileManager.default.contents(atPath: url.path) else {
+            appendOnce(ParseIssue(kind: .missingReference, relativePath: relative, message: "Entitlements file referenced by CODE_SIGN_ENTITLEMENTS was not found."), to: &issues)
+            return EntitlementsFile(url: url, contents: nil)
+        }
+        guard
+            let object = try? PropertyListSerialization.propertyList(from: data, options: [], format: nil),
+            let dictionary = PlistValue(foundation: object)?.dictionaryValue
+        else {
+            appendOnce(ParseIssue(kind: .malformed, relativePath: relative, message: "Entitlements file is not a valid property list."), to: &issues)
+            return EntitlementsFile(url: url, contents: nil)
+        }
+        return EntitlementsFile(url: url, contents: dictionary)
     }
 
     private func appendOnce(_ issue: ParseIssue, to issues: inout [ParseIssue]) {

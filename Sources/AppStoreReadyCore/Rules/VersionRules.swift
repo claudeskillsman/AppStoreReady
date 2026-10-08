@@ -6,8 +6,11 @@ public struct VersionRule: Rule {
         id: "ASR003",
         title: "Version number",
         description: "Checks that CFBundleShortVersionString (MARKETING_VERSION) is set and consists of period-separated integers, as Apple's documentation describes.",
-        category: .versioning,
-        documentationURL: URL(string: "https://developer.apple.com/documentation/bundleresources/information-property-list/cfbundleshortversionstring")
+        rationale: "App Store Connect identifies each release by its version number, and Apple documents its format. A missing or malformed version prevents the build from being uploaded.",
+        category: .appConfiguration,
+        references: [
+            Reference("CFBundleShortVersionString", "https://developer.apple.com/documentation/bundleresources/information-property-list/cfbundleshortversionstring"),
+        ]
     )
 
     public init() {}
@@ -33,8 +36,11 @@ public struct BuildNumberRule: Rule {
         id: "ASR004",
         title: "Build number",
         description: "Checks that CFBundleVersion (CURRENT_PROJECT_VERSION) is set and consists of period-separated integers. Apple documents this key as required by the App Store.",
-        category: .versioning,
-        documentationURL: URL(string: "https://developer.apple.com/documentation/bundleresources/information-property-list/cfbundleversion")
+        rationale: "Apple documents CFBundleVersion as required by the App Store; each upload for a version needs a build number in the documented format.",
+        category: .appConfiguration,
+        references: [
+            Reference("CFBundleVersion", "https://developer.apple.com/documentation/bundleresources/information-property-list/cfbundleversion"),
+        ]
     )
 
     public init() {}

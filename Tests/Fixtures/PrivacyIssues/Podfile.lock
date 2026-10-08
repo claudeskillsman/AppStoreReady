@@ -1,0 +1,12 @@
+PODS:
+  - FirebaseCore (10.0.0):
+    - GoogleUtilities/Environment (~> 7.8)
+  - SDWebImage (5.19.0):
+    - SDWebImage/Core (= 5.19.0)
+  - SDWebImage/Core (5.19.0)
+
+DEPENDENCIES:
+  - FirebaseCore
+  - SDWebImage
+
+COCOAPODS: 1.15.2

@@ -17,8 +17,12 @@ struct AppStoreReadyCommand: ParsableCommand {
         AppStoreReady reads project files only. It never runs build scripts or \
         project code, never uploads anything, and never prints detected secrets.
 
+        Suppress accepted findings in .appstoreready.yml in the scanned \
+        directory (see the README).
+
         Exit codes: 0 = no findings at or above --fail-on, 1 = findings at or \
-        above --fail-on, 2 = the scan could not run, 64 = invalid arguments.
+        above --fail-on, 2 = the scan could not run or .appstoreready.yml is \
+        invalid, 64 = invalid arguments.
         """,
         version: AppStoreReadyVersion.current,
         subcommands: [Scan.self, Rules.self],
@@ -52,6 +56,12 @@ struct Scan: ParsableCommand {
     @Option(name: .customLong("disable"), parsing: .upToNextOption, help: "Rule identifiers to skip, for example ASR008.")
     var disabledRules: [String] = []
 
+    @Option(name: .customLong("config"), help: "Path to a suppressions file. Defaults to .appstoreready.yml in the scan root.")
+    var configPath: String?
+
+    @Flag(name: .customLong("no-suppressions"), help: "Ignore .appstoreready.yml and report every finding.")
+    var noSuppressions = false
+
     @Flag(name: .customLong("no-color"), help: "Disable colored output.")
     var noColor = false
 
@@ -68,12 +78,26 @@ struct Scan: ParsableCommand {
     func run() throws {
         let report: ScanReport
         do {
+            var explicitConfiguration: AppStoreReadyConfiguration?
+            if noSuppressions {
+                explicitConfiguration = AppStoreReadyConfiguration()
+            } else if let configPath {
+                let url = URL(fileURLWithPath: configPath)
+                guard let loaded = try AppStoreReadyConfiguration.load(from: url, knownRuleIDs: RuleRegistry.allRuleIDs) else {
+                    throw ConfigurationError(file: configPath, line: 0, message: "The file does not exist.")
+                }
+                explicitConfiguration = loaded
+            }
             report = try AuditEngine.audit(
                 path: path,
                 options: ScanOptions(configuration: configuration),
-                disabledRuleIDs: Set(disabledRules)
+                disabledRuleIDs: Set(disabledRules),
+                configuration: explicitConfiguration
             )
         } catch let error as ScanError {
+            FileHandle.standardError.write(Data("error: \(error.description)\n".utf8))
+            throw ExitCode(ExitStatus.scanFailed.rawValue)
+        } catch let error as ConfigurationError {
             FileHandle.standardError.write(Data("error: \(error.description)\n".utf8))
             throw ExitCode(ExitStatus.scanFailed.rawValue)
         }
@@ -107,7 +131,7 @@ struct Rules: ParsableCommand {
     var format: ReportFormat = .text
 
     func run() throws {
-        let rules = RuleRegistry.builtIn.map(\.metadata)
+        let rules = RuleRegistry.allMetadata
         switch format {
         case .json:
             let encoder = JSONEncoder()
@@ -115,10 +139,11 @@ struct Rules: ParsableCommand {
             print(String(decoding: try encoder.encode(rules), as: UTF8.self))
         case .text:
             for rule in rules {
-                print("\(rule.id)  \(rule.title)  [\(rule.category.rawValue)]")
+                print("\(rule.id)  \(rule.title)  [\(rule.category.displayName)]")
                 print("        \(rule.description)")
-                if let url = rule.documentationURL {
-                    print("        \(url.absoluteString)")
+                print("        Why: \(rule.rationale)")
+                for reference in rule.references {
+                    print("        Source: \(reference.title) <\(reference.url.absoluteString)>")
                 }
             }
         }

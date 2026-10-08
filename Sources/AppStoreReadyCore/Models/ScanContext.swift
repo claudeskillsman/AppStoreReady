@@ -46,6 +46,17 @@ public struct InfoPlist: Sendable {
     }
 }
 
+/// The entitlements file a target is signed with (`CODE_SIGN_ENTITLEMENTS`).
+public struct EntitlementsFile: Sendable {
+    public let url: URL
+    /// Nil when the file is missing or cannot be parsed (reported by ASR001).
+    public let contents: [String: PlistValue]?
+
+    public subscript(key: String) -> PlistValue? {
+        contents?[key]
+    }
+}
+
 /// A target with build settings resolved for the configuration that will be archived.
 public struct ResolvedTarget: Sendable {
     public let target: ProjectTarget
@@ -56,8 +67,19 @@ public struct ResolvedTarget: Sendable {
     /// Build settings for every configuration of the target, keyed by name.
     public let allConfigurations: [String: BuildSettings]
     public let infoPlist: InfoPlist?
+    public let entitlements: EntitlementsFile?
 
     public var name: String { target.name }
+
+    /// The platform SDK, for example `iphoneos` or `macosx`.
+    public var sdk: String {
+        (buildSettings.value("SDKROOT") ?? "iphoneos").lowercased()
+    }
+
+    /// True for iOS / iPadOS targets (including Mac Catalyst variants).
+    public var isIOS: Bool {
+        sdk.hasPrefix("iphoneos") || sdk.hasPrefix("iphonesimulator") || sdk.isEmpty
+    }
     public var productType: ProductType { target.productType }
 }
 
@@ -115,9 +137,48 @@ public struct AppIconSet: Sendable {
     public struct Image: Sendable {
         public let filename: String?
         public let size: String?
+        public let scale: String?
         public let idiom: String?
+        /// "dark" or "tinted" for appearance variants; nil for the default icon.
+        public let appearance: String?
         public let fileExists: Bool
+        /// Header information when the file is a PNG.
+        public let png: PNGInfo?
     }
+}
+
+/// A third-party dependency found in a lock file.
+public struct Dependency: Sendable, Equatable {
+    public enum Manager: String, Sendable {
+        case swiftPackageManager = "Swift Package Manager"
+        case cocoaPods = "CocoaPods"
+        case carthage = "Carthage"
+    }
+
+    public let name: String
+    public let version: String?
+    public let manager: Manager
+    /// Lock file the dependency was read from, relative to the scan root.
+    public let lockFile: String
+    /// Whether a PrivacyInfo.xcprivacy was found in the dependency's checked-out
+    /// sources (CocoaPods `Pods/` folder). Nil when the sources are not available.
+    public let hasPrivacyManifest: Bool?
+
+    public init(name: String, version: String?, manager: Manager, lockFile: String, hasPrivacyManifest: Bool? = nil) {
+        self.name = name
+        self.version = version
+        self.manager = manager
+        self.lockFile = lockFile
+        self.hasPrivacyManifest = hasPrivacyManifest
+    }
+}
+
+/// Facts read from a PNG header (no image decoding).
+public struct PNGInfo: Sendable, Equatable {
+    public let width: Int
+    public let height: Int
+    /// True when the color type has an alpha channel or a tRNS chunk is present.
+    public let hasAlpha: Bool
 }
 
 /// A problem reading a project file.
@@ -142,6 +203,10 @@ public struct ScanContext: Sendable {
     public let privacyManifests: [PrivacyManifest]
     public let appIconSets: [AppIconSet]
     public let parseIssues: [ParseIssue]
+    public let dependencies: [Dependency]
+    /// Paths of all files under the scan root (relative), including binary ones,
+    /// for rules that look for files by name. Dependency folders are excluded.
+    public let allFilePaths: [String]
 
     public init(
         inputURL: URL,
@@ -151,7 +216,9 @@ public struct ScanContext: Sendable {
         files: [SourceFile],
         privacyManifests: [PrivacyManifest],
         appIconSets: [AppIconSet],
-        parseIssues: [ParseIssue]
+        parseIssues: [ParseIssue],
+        dependencies: [Dependency] = [],
+        allFilePaths: [String] = []
     ) {
         self.inputURL = inputURL
         self.rootURL = rootURL
@@ -161,6 +228,8 @@ public struct ScanContext: Sendable {
         self.privacyManifests = privacyManifests
         self.appIconSets = appIconSets
         self.parseIssues = parseIssues
+        self.dependencies = dependencies
+        self.allFilePaths = allFilePaths
     }
 
     public func relativePath(_ url: URL) -> String {

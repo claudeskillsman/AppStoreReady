@@ -42,20 +42,43 @@ public struct TextReporter: Reporter {
             for item in finding.evidence {
                 lines.append(indent + dim("• \(item)"))
             }
+            if let why = finding.whyItMatters, verbose || finding.severity == .error || finding.severity == .warning {
+                lines.append(indent + "Why: \(why)")
+            }
             if let fix = finding.suggestedFix {
                 lines.append(indent + "Fix: \(fix)")
             }
-            if verbose || finding.severity == .error || finding.severity == .warning {
-                lines.append(indent + dim("Rule \(finding.ruleID) · confidence \(finding.confidence.rawValue)"
-                    + (finding.documentationURL.map { " · \($0.absoluteString)" } ?? "")))
+            var meta = "Rule \(finding.ruleID)"
+            if let classification = finding.classification {
+                meta += " · \(classification.displayName)"
+            }
+            meta += " · confidence \(finding.confidence.rawValue)"
+            if let url = finding.documentationURL {
+                meta += " · \(url.absoluteString)"
+            }
+            lines.append(indent + dim(meta))
+        }
+
+        if !report.suppressed.isEmpty {
+            lines.append("")
+            lines.append(bold("Suppressed by \(AppStoreReadyConfiguration.fileName) (\(report.suppressed.count)):"))
+            for item in report.suppressed {
+                let location = item.finding.file.map { file in item.finding.line.map { "\(file):\($0)" } ?? file }
+                var line = "  \(item.finding.severity.label.padding(toLength: 6, withPad: " ", startingAt: 0))  \(item.finding.ruleID) \(item.finding.title)"
+                if let location { line += dim("  [\(location)]") }
+                lines.append(line)
+                lines.append(dim("          Reason: \(item.reason)" + (item.expires.map { " · expires \($0)" } ?? "")))
             }
         }
 
         let summary = report.summary
-        let manual = summary.manualReview + summary.info
         lines.append("")
-        lines.append(bold("Summary: \(count(summary.errors, "failure")), \(count(summary.warnings, "warning")), \(count(manual, "manual review item"))."))
-        lines.append(dim("\(count(summary.passes, "check")) passed."))
+        lines.append(bold("Summary: \(count(summary.errors, "failure")), \(count(summary.warnings, "warning")), \(count(summary.info, "recommendation")), \(count(summary.manualReview, "manual review item"))."))
+        var passed = "\(count(summary.passes, "check")) passed."
+        if summary.suppressed > 0 {
+            passed += " \(count(summary.suppressed, "finding")) suppressed."
+        }
+        lines.append(dim(passed))
         lines.append(dim("AppStoreReady reports likely problems found by static analysis. It cannot predict App Review decisions."))
         return lines.joined(separator: "\n")
     }

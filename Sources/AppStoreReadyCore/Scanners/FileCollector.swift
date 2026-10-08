@@ -10,6 +10,8 @@ struct FileCollector {
         var privacyManifests: [PrivacyManifest] = []
         var appIconSets: [AppIconSet] = []
         var issues: [ParseIssue] = []
+        /// Every regular file seen, relative to the root (capped).
+        var allFilePaths: [String] = []
     }
 
     let root: URL
@@ -56,6 +58,9 @@ struct FileCollector {
                 }
                 walk(child, output: &output, depth: depth + 1)
                 continue
+            }
+            if output.allFilePaths.count < maxFileCount * 4 {
+                output.allFilePaths.append(PathUtilities.relativePath(of: child, to: root))
             }
             let kind: SourceFile.Kind?
             if name == ".env" || name.hasPrefix(".env.") {
@@ -107,11 +112,16 @@ struct FileCollector {
                     let entries = json["images"] as? [[String: Any]] {
                     images = entries.map { entry in
                         let filename = entry["filename"] as? String
+                        let imageURL = filename.map { url.appendingPathComponent($0) }
+                        let exists = imageURL.map { PathUtilities.exists($0) } ?? false
                         return AppIconSet.Image(
                             filename: filename,
                             size: entry["size"] as? String,
+                            scale: entry["scale"] as? String,
                             idiom: entry["idiom"] as? String,
-                            fileExists: filename.map { PathUtilities.exists(url.appendingPathComponent($0)) } ?? false
+                            appearance: (entry["appearances"] as? [[String: Any]])?.compactMap { $0["value"] as? String }.first,
+                            fileExists: exists,
+                            png: exists ? imageURL.flatMap(PNGReader.read) : nil
                         )
                     }
                 } else {

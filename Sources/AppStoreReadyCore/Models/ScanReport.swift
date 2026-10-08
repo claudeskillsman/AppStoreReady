@@ -7,8 +7,11 @@ public struct ScanSummary: Codable, Equatable, Sendable {
     public var manualReview = 0
     public var info = 0
     public var passes = 0
+    /// Findings hidden by `.appstoreready.yml`; not included in the other counts.
+    public var suppressed = 0
 
-    public init(findings: [Finding]) {
+    public init(findings: [Finding], suppressed: Int = 0) {
+        self.suppressed = suppressed
         for finding in findings {
             switch finding.severity {
             case .error: errors += 1
@@ -19,6 +22,15 @@ public struct ScanSummary: Codable, Equatable, Sendable {
             }
         }
     }
+}
+
+/// A finding hidden by a suppression in `.appstoreready.yml`.
+public struct SuppressedFinding: Codable, Equatable, Sendable {
+    public let finding: Finding
+    public let reason: String
+    public let expires: String?
+    /// Line of the suppression in the configuration file.
+    public let configurationLine: Int
 }
 
 /// The complete result of a scan.
@@ -32,19 +44,22 @@ public struct ScanReport: Codable, Sendable {
     /// Targets that were analysed, as `Target (Configuration)`.
     public let targets: [String]
     public let findings: [Finding]
+    /// Findings hidden by suppressions. Always reported so nothing disappears silently.
+    public let suppressed: [SuppressedFinding]
     public let summary: ScanSummary
 
-    public init(scannedPath: String, projects: [String], targets: [String], findings: [Finding]) {
+    public init(scannedPath: String, projects: [String], targets: [String], findings: [Finding], suppressed: [SuppressedFinding] = []) {
         self.tool = "AppStoreReady"
         self.version = AppStoreReadyVersion.current
         self.scannedPath = scannedPath
         self.projects = projects
         self.targets = targets
         self.findings = findings
-        self.summary = ScanSummary(findings: findings)
+        self.suppressed = suppressed
+        self.summary = ScanSummary(findings: findings, suppressed: suppressed.count)
     }
 }
 
 public enum AppStoreReadyVersion {
-    public static let current = "0.1.0"
+    public static let current = "0.2.0"
 }

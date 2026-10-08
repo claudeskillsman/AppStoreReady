@@ -16,6 +16,10 @@ struct RequiredReasonCategory {
     let name: String
     /// The `NSPrivacyAccessedAPIType` value.
     let identifier: String
+    /// Approved reason codes for this category.
+    let reasons: Set<String>
+    /// Reason codes Apple reserves for third-party SDKs.
+    let sdkOnlyReasons: Set<String>
     let patterns: [TextPattern]
 }
 
@@ -189,11 +193,14 @@ enum APIUsageCatalog {
         ),
     ]
 
-    /// Categories from Apple's "Describing use of required reason API".
+    /// Categories and reason codes from Apple's "Describing use of required reason API"
+    /// and the NSPrivacyAccessedAPIType reference (retrieved 2026-10-08).
     static let requiredReasonCategories: [RequiredReasonCategory] = [
         RequiredReasonCategory(
             name: "File timestamp APIs",
             identifier: "NSPrivacyAccessedAPICategoryFileTimestamp",
+            reasons: ["DDA9.1", "C617.1", "3B52.1", "0A2A.1"],
+            sdkOnlyReasons: ["0A2A.1"],
             patterns: [
                 TextPattern(#"FileAttributeKey\s*\.\s*(creationDate|modificationDate)\b"#),
                 TextPattern(#"\[\s*\.(creationDate|modificationDate)\s*\]"#),
@@ -207,6 +214,8 @@ enum APIUsageCatalog {
         RequiredReasonCategory(
             name: "System boot time APIs",
             identifier: "NSPrivacyAccessedAPICategorySystemBootTime",
+            reasons: ["35F9.1", "8FFB.1", "3D61.1"],
+            sdkOnlyReasons: [],
             patterns: [
                 TextPattern(#"\.systemUptime\b"#),
                 TextPattern(#"\bmach_absolute_time\s*\("#),
@@ -215,6 +224,8 @@ enum APIUsageCatalog {
         RequiredReasonCategory(
             name: "Disk space APIs",
             identifier: "NSPrivacyAccessedAPICategoryDiskSpace",
+            reasons: ["85F4.1", "E174.1", "7D9E.1", "B728.1"],
+            sdkOnlyReasons: [],
             patterns: [
                 TextPattern(#"volumeAvailableCapacity(ForImportantUsage|ForOpportunisticUsage)?Key\b"#),
                 TextPattern(#"\bvolumeTotalCapacityKey\b"#),
@@ -227,11 +238,15 @@ enum APIUsageCatalog {
         RequiredReasonCategory(
             name: "Active keyboard APIs",
             identifier: "NSPrivacyAccessedAPICategoryActiveKeyboards",
+            reasons: ["3EC4.1", "54BD.1"],
+            sdkOnlyReasons: [],
             patterns: [TextPattern(#"\bactiveInputModes\b"#)]
         ),
         RequiredReasonCategory(
             name: "User defaults APIs",
             identifier: "NSPrivacyAccessedAPICategoryUserDefaults",
+            reasons: ["CA92.1", "1C8F.1", "C56D.1", "AC6B.1"],
+            sdkOnlyReasons: ["C56D.1"],
             patterns: [
                 TextPattern(#"\bUserDefaults\b"#),
                 TextPattern(#"\bNSUserDefaults\b"#),
@@ -239,4 +254,25 @@ enum APIUsageCatalog {
             ]
         ),
     ]
+
+    /// Values Apple documents for `NSPrivacyCollectedDataType` (retrieved 2026-10-08).
+    /// Apple spells PhotosorVideos with a lowercase "or".
+    static let collectedDataTypes: Set<String> = Set([
+        "Name", "EmailAddress", "PhoneNumber", "PhysicalAddress", "OtherUserContactInfo",
+        "Health", "Fitness", "PaymentInfo", "CreditInfo", "OtherFinancialInfo",
+        "PreciseLocation", "CoarseLocation", "SensitiveInfo", "Contacts", "EmailsOrTextMessages",
+        "PhotosorVideos", "AudioData", "GameplayContent", "CustomerSupport", "OtherUserContent",
+        "BrowsingHistory", "SearchHistory", "UserID", "DeviceID", "PurchaseHistory",
+        "ProductInteraction", "AdvertisingData", "OtherUsageData", "CrashData", "PerformanceData",
+        "OtherDiagnosticData", "EnvironmentScanning", "Hands", "Head", "OtherDataTypes",
+    ].map { "NSPrivacyCollectedDataType" + $0 })
+
+    /// Values Apple documents for `NSPrivacyCollectedDataTypePurposes`.
+    static let collectedDataPurposes: Set<String> = Set([
+        "ThirdPartyAdvertising", "DeveloperAdvertising", "Analytics",
+        "ProductPersonalization", "AppFunctionality", "Other",
+    ].map { "NSPrivacyCollectedDataTypePurpose" + $0 })
+
+    /// Code that uses App Tracking Transparency or the advertising identifier.
+    static let trackingPatterns = [TextPattern(#"\bATTrackingManager\b|\badvertisingIdentifier\b|\bASIdentifierManager\b"#)]
 }
