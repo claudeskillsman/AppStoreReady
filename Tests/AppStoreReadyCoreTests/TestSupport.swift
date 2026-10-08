@@ -16,8 +16,8 @@ enum Fixtures {
         try ProjectScanner(options: ScanOptions(configuration: configuration)).scan(path: path(name))
     }
 
-    static func report(_ name: String, configuration: String? = nil, disabled: Set<String> = []) throws -> ScanReport {
-        try AuditEngine.audit(path: path(name), options: ScanOptions(configuration: configuration), disabledRuleIDs: disabled)
+    static func report(_ name: String, configuration: String? = nil, disabled: Set<String> = [], today: String? = "2026-10-08") throws -> ScanReport {
+        try AuditEngine.audit(path: path(name), options: ScanOptions(configuration: configuration), disabledRuleIDs: disabled, today: today)
     }
 }
 

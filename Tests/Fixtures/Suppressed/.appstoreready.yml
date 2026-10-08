@@ -1,0 +1,10 @@
+# Suppressions for the Suppressed fixture.
+version: 1
+suppressions:
+  - rule: ASR008
+    reason: AWS documentation example key, not a real credential
+    path: Suppressed/Keys.swift
+    expires: 2030-12-31
+  - rule: ASR009
+    reason: Temporary until the scheme is fixed
+    expires: 2026-01-31

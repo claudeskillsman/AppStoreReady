@@ -6,8 +6,11 @@ public struct AppIconRule: Rule {
         id: "ASR005",
         title: "App icon",
         description: "Checks that each application target names an app icon set (ASSETCATALOG_COMPILER_APPICON_NAME) that exists in an asset catalog and contains images, including a 1024x1024 App Store icon.",
+        rationale: "App Store Connect requires an app icon, and the 1024x1024 image is used for the App Store listing. Builds without one are rejected during upload processing.",
         category: .assets,
-        documentationURL: URL(string: "https://developer.apple.com/documentation/xcode/configuring-your-app-icon")
+        references: [
+            Reference("Configuring your app icon", "https://developer.apple.com/documentation/xcode/configuring-your-app-icon"),
+        ]
     )
 
     public init() {}

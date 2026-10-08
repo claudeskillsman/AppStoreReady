@@ -6,8 +6,11 @@ public struct BundleIdentifierRule: Rule {
         id: "ASR002",
         title: "Bundle identifier",
         description: "Checks that each app and app extension has a CFBundleIdentifier that resolves to a non-empty value containing only the characters Apple documents as valid (A-Z, a-z, 0-9, hyphen, period).",
-        category: .configuration,
-        documentationURL: URL(string: "https://developer.apple.com/documentation/bundleresources/information-property-list/cfbundleidentifier")
+        rationale: "The bundle ID must match the App ID registered for the app in App Store Connect, and Apple documents which characters it may contain. A missing or invalid identifier prevents the build from being uploaded.",
+        category: .appConfiguration,
+        references: [
+            Reference("CFBundleIdentifier", "https://developer.apple.com/documentation/bundleresources/information-property-list/cfbundleidentifier"),
+        ]
     )
 
     private static let validCharacters = TextPattern(#"^[A-Za-z0-9.\-]+$"#)

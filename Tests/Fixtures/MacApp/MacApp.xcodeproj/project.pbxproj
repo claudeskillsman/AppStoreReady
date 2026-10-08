@@ -1,0 +1,206 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		5EB15782C217615D95254E80 = {isa = PBXBuildFile; fileRef = 8AF0A1C3639FA5505C3D9724 /* MacApp.swift */; };
+		6BAB1A3591160DAB9A6FCC87 = {isa = PBXBuildFile; fileRef = 19B55041D09A69F450AF58F7 /* Assets.xcassets */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		0F6E8276462E7419B3A0CB77 = {isa = PBXFileReference; explicitFileType = wrapper.app; includeInIndex = 0; path = MacApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		19B55041D09A69F450AF58F7 = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		8AF0A1C3639FA5505C3D9724 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacApp.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		1F172F639F92BC3DD6B274E3 = {
+			isa = PBXGroup;
+			children = (
+				0F6E8276462E7419B3A0CB77,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		B457BFCB337265AE173275F8 = {
+			isa = PBXGroup;
+			children = (
+				19B55041D09A69F450AF58F7 /* Assets.xcassets */,
+				8AF0A1C3639FA5505C3D9724 /* MacApp.swift */,
+			);
+			path = MacApp;
+			sourceTree = "<group>";
+		};
+		C959439AF063A6A83F1323DD = {
+			isa = PBXGroup;
+			children = (
+				B457BFCB337265AE173275F8,
+				1F172F639F92BC3DD6B274E3,
+			);
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		0956675688B443F34C1264FD = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 4C8A7D24FCC3A1EA717A391E;
+			buildPhases = (
+				336925CE61416D60E6D3321A,
+				8A722DDABE25EA4F7DEE4D0B,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = MacApp;
+			productName = MacApp;
+			productReference = 0F6E8276462E7419B3A0CB77;
+			productType = com.apple.product-type.application;
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		4F2061481B41D2AC153D42FF = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1600;
+				LastUpgradeCheck = 1600;
+			};
+			buildConfigurationList = 44FF8559DACFBCCEF34BF00B;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = C959439AF063A6A83F1323DD;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 1F172F639F92BC3DD6B274E3 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				0956675688B443F34C1264FD,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		8A722DDABE25EA4F7DEE4D0B = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				6BAB1A3591160DAB9A6FCC87,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		336925CE61416D60E6D3321A = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				5EB15782C217615D95254E80,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		2E2D256E5B95A45CAC61FDA7 = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf-with-dsym;
+				ENABLE_NS_ASSERTIONS = NO;
+				MACOSX_DEPLOYMENT_TARGET = 10.15;
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		49BA562CC0D7C8827027B62F = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_TESTABILITY = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 10.15;
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = -Onone;
+			};
+			name = Debug;
+		};
+		546B550137BA7E10FADEA8F5 = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = ABCDE12345;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
+				INFOPLIST_KEY_LSApplicationCategoryType = public.app-category.productivity-tools;
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.acme.macapp;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		CF9BAAEF38404DE8EA1CAF69 = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = ABCDE12345;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
+				INFOPLIST_KEY_LSApplicationCategoryType = public.app-category.productivity-tools;
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.acme.macapp;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		44FF8559DACFBCCEF34BF00B = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				49BA562CC0D7C8827027B62F,
+				2E2D256E5B95A45CAC61FDA7,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		4C8A7D24FCC3A1EA717A391E = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				CF9BAAEF38404DE8EA1CAF69,
+				546B550137BA7E10FADEA8F5,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 4F2061481B41D2AC153D42FF /* Project object */;
+}

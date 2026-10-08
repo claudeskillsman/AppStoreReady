@@ -60,6 +60,7 @@ public struct ProjectScanner {
         for issue in collected.issues where !issues.contains(issue) {
             issues.append(issue)
         }
+        let dependencies = DependencyScanner.scan(root: root, filePaths: collected.allFilePaths, issues: &issues)
 
         return ScanContext(
             inputURL: inputURL,
@@ -69,7 +70,9 @@ public struct ProjectScanner {
             files: collected.files,
             privacyManifests: collected.privacyManifests,
             appIconSets: collected.appIconSets,
-            parseIssues: issues
+            parseIssues: issues,
+            dependencies: dependencies,
+            allFilePaths: collected.allFilePaths
         )
     }
 }

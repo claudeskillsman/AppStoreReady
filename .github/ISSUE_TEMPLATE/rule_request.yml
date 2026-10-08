@@ -1,0 +1,22 @@
+name: New rule
+description: Suggest a check that catches a real App Store submission problem.
+labels: [rule-request]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem should it catch?
+      description: For example an App Store Connect upload error, an App Review rejection, or a crash.
+    validations:
+      required: true
+  - type: input
+    id: source
+    attributes:
+      label: Apple documentation
+      description: A developer.apple.com page that states the requirement. Rules are only added when Apple documents them.
+    validations:
+      required: true
+  - type: textarea
+    id: detection
+    attributes:
+      label: How could it be detected from project files?

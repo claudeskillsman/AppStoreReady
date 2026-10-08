@@ -102,6 +102,8 @@ public struct ProjectTarget: Sendable {
     public let memberDirectories: [String]
     /// Files explicitly excluded from synchronized folders.
     public let excludedFiles: Set<String>
+    /// Names of "Run Script" build phases. They are listed, never executed.
+    public let scriptPhaseNames: [String]
 
     /// Whether AppStoreReady could work out which files belong to the target.
     public var hasKnownMembership: Bool {

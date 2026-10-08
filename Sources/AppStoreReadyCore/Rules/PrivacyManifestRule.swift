@@ -11,9 +11,16 @@ public struct PrivacyManifestRule: Rule {
     public let metadata = RuleMetadata(
         id: "ASR007",
         title: "Privacy manifest",
-        description: "Detects use of required reason APIs (file timestamps, system boot time, disk space, active keyboards, user defaults) and checks that a PrivacyInfo.xcprivacy in the target declares each category with at least one reason.",
+        description: "Detects use of required reason APIs (file timestamps, system boot time, disk space, active keyboards, user defaults) and checks that a PrivacyInfo.xcprivacy in the target declares each category with an approved reason. Also validates the manifest's reason codes, collected data entries, and tracking settings against Apple's documented values.",
+        rationale: "Apple's documentation states that, starting May 1, 2024, apps that don't describe their use of required reason API in their privacy manifest aren't accepted by App Store Connect. Xcode also can't build a correct privacy report from values Apple does not document.",
         category: .privacy,
-        documentationURL: URL(string: "https://developer.apple.com/documentation/bundleresources/describing-use-of-required-reason-api")
+        references: [
+            Reference("Describing use of required reason API", "https://developer.apple.com/documentation/bundleresources/describing-use-of-required-reason-api"),
+            Reference("Privacy manifest files", "https://developer.apple.com/documentation/bundleresources/privacy-manifest-files"),
+            Reference("NSPrivacyAccessedAPIType", "https://developer.apple.com/documentation/bundleresources/app-privacy-configuration/nsprivacyaccessedapitypes/nsprivacyaccessedapitype"),
+            Reference("Describing data use in privacy manifests", "https://developer.apple.com/documentation/bundleresources/describing-data-use-in-privacy-manifests"),
+            Reference("NSPrivacyTracking", "https://developer.apple.com/documentation/bundleresources/app-privacy-configuration/nsprivacytracking"),
+        ]
     )
 
     public init() {}
@@ -25,7 +32,9 @@ public struct PrivacyManifestRule: Rule {
     private func evaluate(_ target: ResolvedTarget, context: ScanContext) -> [Finding] {
         let (files, exactFiles) = context.codeFiles(for: target)
         var used: [(category: RequiredReasonCategory, file: SourceFile, line: Int)] = []
-        for category in APIUsageCatalog.requiredReasonCategories {
+        // Apple lists required reasons for iOS, iPadOS, tvOS, visionOS, and watchOS; not macOS.
+        let requiredReasonsApply = !target.sdk.hasPrefix("macosx")
+        for category in APIUsageCatalog.requiredReasonCategories where requiredReasonsApply {
             if let match = context.firstMatch(of: category.patterns, in: files) {
                 used.append((category, match.file, match.line))
             }
@@ -120,19 +129,22 @@ public struct PrivacyManifestRule: Rule {
         }
 
         for manifest in manifests {
-            let tracking = manifest.contents?["NSPrivacyTracking"]?.boolValue ?? false
-            let domains = manifest.contents?["NSPrivacyTrackingDomains"]?.arrayValue ?? []
-            if tracking && domains.isEmpty {
-                findings.append(finding(
-                    "Tracking enabled without tracking domains",
-                    message: "NSPrivacyTracking is true but NSPrivacyTrackingDomains is empty. Apple's documentation says to list the tracking domains when NSPrivacyTracking is true.",
-                    severity: .warning,
-                    confidence: .high,
-                    file: manifest.relativePath,
-                    target: target,
-                    fix: "List the internet domains the app connects to for tracking, or set NSPrivacyTracking to false if the app does not track."
-                ))
-            }
+            findings += validate(manifest, target: target)
+        }
+
+        if let trackingUse = context.firstMatch(of: APIUsageCatalog.trackingPatterns, in: files),
+           !manifests.contains(where: { $0.contents?["NSPrivacyTracking"]?.boolValue == true }) {
+            findings.append(finding(
+                "Tracking APIs used while the manifest declares no tracking",
+                message: "'\(target.name)' uses App Tracking Transparency or the advertising identifier, but no privacy manifest in the target sets NSPrivacyTracking to true. Whether the app tracks, as defined by App Tracking Transparency, cannot be determined from code.",
+                severity: .manualReview,
+                confidence: .medium,
+                file: trackingUse.file.relativePath,
+                line: trackingUse.line,
+                target: target,
+                evidence: ["\(trackingUse.file.relativePath):\(trackingUse.line) uses tracking APIs"],
+                fix: "If the app or its SDKs use data for tracking, set NSPrivacyTracking to true and list NSPrivacyTrackingDomains. Make sure the App Privacy details in App Store Connect match."
+            ))
         }
 
         if findings.isEmpty {
@@ -146,6 +158,137 @@ public struct PrivacyManifestRule: Rule {
                 file: manifestFile,
                 target: target,
                 evidence: used.map { "\($0.category.identifier) declared" }
+            ))
+        }
+        return findings
+    }
+
+    /// Checks a manifest's values against the keys and values Apple documents.
+    func validate(_ manifest: PrivacyManifest, target: ResolvedTarget) -> [Finding] {
+        guard let contents = manifest.contents else { return [] }
+        var findings: [Finding] = []
+        let file = manifest.relativePath
+        let categories = Dictionary(uniqueKeysWithValues: APIUsageCatalog.requiredReasonCategories.map { ($0.identifier, $0) })
+
+        // NSPrivacyAccessedAPITypes
+        var invalidAPI: [String] = []
+        var sdkOnly: [String] = []
+        for (index, entry) in (contents["NSPrivacyAccessedAPITypes"]?.arrayValue ?? []).enumerated() {
+            guard let type = entry["NSPrivacyAccessedAPIType"]?.stringValue else {
+                invalidAPI.append("NSPrivacyAccessedAPITypes[\(index)] has no NSPrivacyAccessedAPIType")
+                continue
+            }
+            guard let category = categories[type] else {
+                invalidAPI.append("NSPrivacyAccessedAPITypes[\(index)]: '\(type)' is not a documented API category")
+                continue
+            }
+            for reason in entry["NSPrivacyAccessedAPITypeReasons"]?.arrayValue?.compactMap(\.stringValue) ?? [] {
+                let code = reason.trimmingCharacters(in: .whitespaces)
+                if code.isEmpty { continue }
+                if !category.reasons.contains(code) {
+                    invalidAPI.append("\(type): '\(code)' is not an approved reason for this category")
+                } else if category.sdkOnlyReasons.contains(code), target.productType.isDistributableBundle {
+                    sdkOnly.append("\(type): \(code)")
+                }
+            }
+        }
+        if !invalidAPI.isEmpty {
+            findings.append(finding(
+                "Invalid required reason declaration",
+                message: "The privacy manifest for '\(target.name)' declares API categories or reason codes that Apple does not document.",
+                severity: .error,
+                confidence: .high,
+                classification: .verifiedIssue,
+                file: file,
+                target: target,
+                evidence: invalidAPI,
+                fix: "Use only the NSPrivacyAccessedAPIType values and reason codes listed in Apple's documentation, and pick the reason that matches how the app uses the API."
+            ))
+        }
+        if !sdkOnly.isEmpty {
+            findings.append(finding(
+                "SDK-only reason used in an app manifest",
+                message: "The privacy manifest for '\(target.name)' uses a reason code that Apple reserves for third-party SDKs that wrap the API.",
+                severity: .warning,
+                confidence: .medium,
+                classification: .potentialIssue,
+                file: file,
+                target: target,
+                evidence: sdkOnly,
+                fix: "Unless this target is itself a third-party SDK, choose the reason that describes the app's own use of the API."
+            ))
+        }
+
+        // NSPrivacyCollectedDataTypes
+        let requiredKeys = ["NSPrivacyCollectedDataType", "NSPrivacyCollectedDataTypeLinked", "NSPrivacyCollectedDataTypeTracking", "NSPrivacyCollectedDataTypePurposes"]
+        var missingKeys: [String] = []
+        var unknownValues: [String] = []
+        for (index, entry) in (contents["NSPrivacyCollectedDataTypes"]?.arrayValue ?? []).enumerated() {
+            let dictionary = entry.dictionaryValue ?? [:]
+            let missing = requiredKeys.filter { dictionary[$0] == nil }
+            if !missing.isEmpty {
+                missingKeys.append("NSPrivacyCollectedDataTypes[\(index)] is missing \(missing.joined(separator: ", "))")
+            }
+            if let type = dictionary["NSPrivacyCollectedDataType"]?.stringValue, !APIUsageCatalog.collectedDataTypes.contains(type) {
+                unknownValues.append("NSPrivacyCollectedDataTypes[\(index)]: data type '\(type)' is not a documented value")
+            }
+            for purpose in dictionary["NSPrivacyCollectedDataTypePurposes"]?.arrayValue?.compactMap(\.stringValue) ?? []
+            where !APIUsageCatalog.collectedDataPurposes.contains(purpose) {
+                unknownValues.append("NSPrivacyCollectedDataTypes[\(index)]: purpose '\(purpose)' is not a documented value")
+            }
+        }
+        if !missingKeys.isEmpty {
+            findings.append(finding(
+                "Incomplete collected data entry",
+                message: "Apple's documentation says each NSPrivacyCollectedDataTypes entry needs the data type, whether it is linked to the user, whether it is used for tracking, and its purposes.",
+                severity: .error,
+                confidence: .high,
+                classification: .verifiedIssue,
+                file: file,
+                target: target,
+                evidence: missingKeys,
+                fix: "Add the missing keys to each collected data dictionary."
+            ))
+        }
+        if !unknownValues.isEmpty {
+            findings.append(finding(
+                "Undocumented collected data value",
+                message: "Apple's documentation says Xcode won't generate a privacy report correctly if you define your own collected data types or purposes.",
+                severity: .warning,
+                confidence: .high,
+                classification: .verifiedIssue,
+                file: file,
+                target: target,
+                evidence: unknownValues,
+                fix: "Use the data type and purpose values listed in Apple's documentation (note the spelling NSPrivacyCollectedDataTypePhotosorVideos)."
+            ))
+        }
+
+        // NSPrivacyTracking / NSPrivacyTrackingDomains
+        let tracking = contents["NSPrivacyTracking"]?.boolValue ?? false
+        let domains = contents["NSPrivacyTrackingDomains"]?.arrayValue ?? []
+        if tracking && domains.isEmpty {
+            findings.append(finding(
+                "Tracking enabled without tracking domains",
+                message: "NSPrivacyTracking is true but NSPrivacyTrackingDomains is empty. Apple's documentation says that when NSPrivacyTracking is true you need to provide the list of tracking domains.",
+                severity: .warning,
+                confidence: .high,
+                classification: .verifiedIssue,
+                file: file,
+                target: target,
+                fix: "List the internet domains the app connects to for tracking, or set NSPrivacyTracking to false if the app does not track."
+            ))
+        } else if !tracking && !domains.isEmpty {
+            findings.append(finding(
+                "Tracking domains listed while tracking is off",
+                message: "NSPrivacyTrackingDomains lists \(domains.count) domain(s) but NSPrivacyTracking is not true. Apple's documentation says to set NSPrivacyTracking to true to provide tracking domains.",
+                severity: .warning,
+                confidence: .high,
+                classification: .verifiedIssue,
+                file: file,
+                target: target,
+                evidence: domains.compactMap(\.stringValue).prefix(10).map { "NSPrivacyTrackingDomains: \($0)" },
+                fix: "Set NSPrivacyTracking to true if the app tracks, or remove NSPrivacyTrackingDomains."
             ))
         }
         return findings

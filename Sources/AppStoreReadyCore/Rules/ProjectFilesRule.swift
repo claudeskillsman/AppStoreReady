@@ -6,8 +6,11 @@ public struct ProjectFilesRule: Rule {
         id: "ASR001",
         title: "Project files are readable",
         description: "Checks that the project file, Info.plist files, privacy manifests, schemes, and asset catalog metadata can be parsed. Malformed files usually break the build, and they prevent the other checks from running.",
-        category: .project,
-        documentationURL: URL(string: "https://developer.apple.com/documentation/bundleresources/managing-your-app-s-information-property-list")
+        rationale: "A project file that cannot be parsed usually breaks the build or archive, and AppStoreReady cannot check anything that depends on it.",
+        category: .appConfiguration,
+        references: [
+            Reference("Managing your app’s information property list", "https://developer.apple.com/documentation/bundleresources/managing-your-app-s-information-property-list"),
+        ]
     )
 
     public init() {}
@@ -17,6 +20,7 @@ public struct ProjectFilesRule: Rule {
             let isCritical = issue.relativePath.hasSuffix(".pbxproj")
                 || issue.relativePath.hasSuffix(".plist")
                 || issue.relativePath.hasSuffix(".xcprivacy")
+                || issue.relativePath.hasSuffix(".entitlements")
                 || issue.kind == .missingReference
             let title: String
             switch issue.kind {

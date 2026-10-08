@@ -9,8 +9,11 @@ public struct HardcodedSecretRule: Rule {
         id: "ASR008",
         title: "Hardcoded secrets",
         description: "Searches source, property list, configuration, and scheme files for values that look like credentials: cloud provider keys, API tokens, private keys, and high-entropy values assigned to names such as apiKey or secret. Detected values are never printed.",
+        rationale: "Anything compiled into an app or bundled as a resource can be extracted by anyone who downloads it, so embedded credentials should be treated as public.",
         category: .security,
-        documentationURL: URL(string: "https://developer.apple.com/documentation/security/storing-keys-in-the-keychain")
+        references: [
+            Reference("Storing keys in the keychain", "https://developer.apple.com/documentation/security/storing-keys-in-the-keychain"),
+        ]
     )
 
     /// Lines containing this marker are skipped.
@@ -139,11 +142,5 @@ public struct HardcodedSecretRule: Rule {
         // Identifiers and key paths are not secrets.
         if value.allSatisfy({ $0.isLetter || $0 == "_" || $0 == "." }) { return false }
         return Redactor.entropy(value) >= 3.0
-    }
-
-    private func isTestPath(_ path: String) -> Bool {
-        path.split(separator: "/").dropLast().contains { component in
-            component.hasSuffix("Tests") || component == "Fixtures" || component == "Mocks" || component == "Test"
-        }
     }
 }

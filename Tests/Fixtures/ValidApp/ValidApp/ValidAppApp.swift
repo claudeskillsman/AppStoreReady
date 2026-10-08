@@ -7,6 +7,7 @@ struct ValidAppApp: App {
     var body: some Scene {
         WindowGroup {
             Text(hasCompletedOnboarding ? "Welcome back" : "Welcome")
+                .accessibilityLabel("Greeting")
         }
     }
 }
